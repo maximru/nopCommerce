@@ -49,6 +49,7 @@ namespace Nop.Data.Migrations
             _typeMapping = new Dictionary<Type, Action<ICreateTableColumnAsTypeSyntax>>()
             {
                 [typeof(int)] = c => c.AsInt32(),
+                [typeof(long)] = c => c.AsInt64(),
                 [typeof(string)] = c => c.AsString(int.MaxValue).Nullable(),
                 [typeof(bool)] = c => c.AsBoolean(),
                 [typeof(decimal)] = c => c.AsDecimal(18, 4),
@@ -179,7 +180,10 @@ namespace Nop.Data.Migrations
 
             foreach (var migrationInfo in migrations)
             {
-                if(isUpdateProcess && migrationInfo.Migration.GetType().GetCustomAttributes(typeof(SkipMigrationOnUpdateAttribute)).Any())
+                if (migrationInfo.Migration.GetType().GetCustomAttributes(typeof(SkipMigrationAttribute)).Any())
+                    continue;
+
+                if (isUpdateProcess && migrationInfo.Migration.GetType().GetCustomAttributes(typeof(SkipMigrationOnUpdateAttribute)).Any())
                     continue;
 
                 _migrationRunner.MigrateUp(migrationInfo.Version);
@@ -197,6 +201,9 @@ namespace Nop.Data.Migrations
 
             foreach (var migrationInfo in migrations)
             {
+                if (migrationInfo.Migration.GetType().GetCustomAttributes(typeof(SkipMigrationAttribute)).Any())
+                    continue;
+
                 _migrationRunner.Down(migrationInfo.Migration);
                 _versionLoader.DeleteVersion(migrationInfo.Version);
             }
